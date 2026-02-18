@@ -1,14 +1,32 @@
-# 1. 提示用户输入目录名称
-$dirName = Read-Host "请输入项目名称(将作为文件夹名)"
+# 1. 自动查找当前目录下数字开头的子目录，找到最大数字
+$currentDirs = Get-ChildItem -Directory -ErrorAction SilentlyContinue
+$maxNumber = 0
 
-# 2. 检查输入是否为空
-if ([string]::IsNullOrWhiteSpace($dirName)) {
+foreach ($dir in $currentDirs) {
+    if ($dir.Name -match '^\d+') {
+        $num = [int]$matches[0]
+        if ($num -gt $maxNumber) {
+            $maxNumber = $num
+        }
+    }
+}
+
+$newNumber = $maxNumber + 1
+$formattedNumber = $newNumber.ToString("00")
+
+# 2. 提示用户输入目录名称
+$name = Read-Host "请输入项目名称"
+
+# 3. 检查输入是否为空
+if ([string]::IsNullOrWhiteSpace($name)) {
     Write-Host "错误：名称不能为空。" -ForegroundColor Red
     exit
 }
 
-# 3. 在当前目录下创建子目录
-# 修改点：去掉了 $newItem = ...，并添加了 | Out-Null 以抑制默认输出
+# 4. 组合成最终目录名
+$dirName = "$formattedNumber$name"
+
+# 5. 在当前目录下创建子目录
 try {
     New-Item -Path ".\$dirName" -ItemType Directory -Force | Out-Null
     Write-Host "目录 '$dirName' 准备就绪..." -ForegroundColor Cyan
@@ -18,10 +36,10 @@ catch {
     exit
 }
 
-# 4. 拼接文件路径
+# 6. 拼接文件路径
 $filePath = Join-Path -Path ".\$dirName" -ChildPath "main.go"
 
-# 5. 创建 main.go 并写入 "package main"
+# 7. 创建 main.go 并写入 "package main"
 try {
     "package main" | Set-Content -Path $filePath -Encoding UTF8
     Write-Host "成功！已创建文件: $filePath" -ForegroundColor Green
