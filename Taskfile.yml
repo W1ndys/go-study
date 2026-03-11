@@ -1,0 +1,44 @@
+version: "3"
+
+tasks:
+  create:
+    desc: 创建新的 Go 学习项目 (task create -- <name> 或交互式输入)
+    interactive: true
+    cmds:
+      - |
+        name="{{.CLI_ARGS}}"
+        if [ -z "$name" ]; then
+          printf "请输入项目名称: "
+          read name
+        fi
+        if [ -z "$name" ]; then
+          echo "错误：名称不能为空。"
+          exit 1
+        fi
+        max=0
+        for entry in */; do
+          [ "$entry" = "*/" ] && continue
+          entry="${entry%/}"
+          num=$(echo "$entry" | grep -oE '^[0-9]+')
+          if [ -n "$num" ]; then
+            num=$(echo "$num" | sed 's/^0*//')
+            : "${num:=0}"
+            if [ "$num" -gt "$max" ]; then
+              max=$num
+            fi
+          fi
+        done
+        next=$((max + 1))
+        formatted=$(printf "%02d" "$next")
+        dirname="${formatted}${name}"
+        mkdir -p "$dirname"
+        echo "package main" > "$dirname/main.go"
+        echo "成功！已创建目录: $dirname"
+        echo "成功！已创建文件: $dirname/main.go"
+
+  update:
+    desc: 提交并推送更改到远程仓库
+    cmds:
+      - git add .
+      - git commit -m "Update go files"
+      - git push origin main
